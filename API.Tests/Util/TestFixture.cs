@@ -2,12 +2,18 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace API.Tests.Util
 {
     public class TestFixture : IDisposable
     {
         private readonly Process _funcHostProcess;
+        public CloudQueue OrdersQueue;
+        public CloudBlobContainer VipOrdersContainer;
+        public CloudBlobContainer NormalOrdersContainer;
 
         public readonly HttpClient Client = new HttpClient();
 
@@ -33,6 +39,24 @@ namespace API.Tests.Util
             }
 
             Client.BaseAddress = new Uri($"http://localhost:{Port}");
+
+            OrdersQueue = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
+                .CreateCloudQueueClient()
+                .GetQueueReference("orders");
+
+            OrdersQueue.CreateIfNotExistsAsync().Wait();
+
+            VipOrdersContainer = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
+                .CreateCloudBlobClient()
+                .GetContainerReference("viporders");
+
+            VipOrdersContainer.CreateIfNotExistsAsync().Wait();
+
+            NormalOrdersContainer = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
+                .CreateCloudBlobClient()
+                .GetContainerReference("normalorders");
+
+            NormalOrdersContainer.CreateIfNotExistsAsync().Wait();
         }
 
         public int Port { get; } = 7071;

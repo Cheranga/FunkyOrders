@@ -17,31 +17,13 @@ namespace API.Tests.Integration
         public OrderCreationTests(TestFixture fixture)
         {
             _fixture = fixture;
-
-            _queue = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
-                .CreateCloudQueueClient()
-                .GetQueueReference("orders");
-
-            _vipOrdersContainer = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
-                .CreateCloudBlobClient()
-                .GetContainerReference("viporders");
-
-            _normalOrdersContainer = CloudStorageAccount.Parse(ConfigurationHelper.Settings.StorageConnectionString)
-                .CreateCloudBlobClient()
-                .GetContainerReference("normalorders");
         }
 
         private readonly TestFixture _fixture;
-        private readonly CloudQueue _queue;
-        private readonly CloudBlobContainer _vipOrdersContainer;
-        private readonly CloudBlobContainer _normalOrdersContainer;
 
         [Fact]
         public async Task Normal_Orders_Must_Be_In_Normal_Orders_Container()
         {
-            await _queue.DeleteIfExistsAsync();
-            await _normalOrdersContainer.DeleteIfExistsAsync();
-
             var httpResponse = await _fixture.Client.PostAsJsonAsync("api/createorder", new CreateOrderRequest
             {
                 CustomerId = 1,
@@ -59,7 +41,7 @@ namespace API.Tests.Integration
 
             Assert.NotNull(createOrderResponse);
 
-            var order = _normalOrdersContainer.GetBlockBlobReference($"{createOrderResponse.OrderId}.json");
+            var order = _fixture.NormalOrdersContainer.GetBlockBlobReference($"{createOrderResponse.OrderId}.json");
             var exists = await order.ExistsAsync();
 
 
@@ -73,9 +55,6 @@ namespace API.Tests.Integration
         [Fact]
         public async Task Vip_Orders_Must_Be_In_Vip_Orders_Container()
         {
-            await _queue.DeleteIfExistsAsync();
-            await _vipOrdersContainer.DeleteIfExistsAsync();
-
             var httpResponse = await _fixture.Client.PostAsJsonAsync("api/createorder", new CreateOrderRequest
             {
                 CustomerId = 2,
@@ -93,7 +72,7 @@ namespace API.Tests.Integration
 
             Assert.NotNull(createOrderResponse);
 
-            var order = _vipOrdersContainer.GetBlockBlobReference($"{createOrderResponse.OrderId}.json");
+            var order = _fixture.VipOrdersContainer.GetBlockBlobReference($"{createOrderResponse.OrderId}.json");
             var exists = await order.ExistsAsync();
 
 
