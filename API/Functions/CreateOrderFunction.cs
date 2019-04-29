@@ -16,7 +16,7 @@ namespace API.Functions
     {
         [FunctionName("CreateOrder")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]
             HttpRequest req,
             [Queue("orders")] IAsyncCollector<OrderReceivedEvent> ordersQueue,
             ILogger log)
